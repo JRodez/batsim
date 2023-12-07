@@ -797,15 +797,15 @@ int main(int argc, char * argv[])
     // Let's configure how Batsim should be logged
     configure_batsim_logging_output(main_args);
 
+    // Instantiate SimGrid
+    simgrid::s4u::Engine engine(&argc, argv);
+
     // Initialize the energy plugin before creating the engine
     if (main_args.energy_used)
     {
         sg_host_energy_plugin_init();
     }
 
-    // Instantiate SimGrid
-
-    simgrid::s4u::Engine engine(&argc, argv);
 
     // Setting SimGrid configuration options, if any
     for (const string & cfg_string : main_args.simgrid_config)
