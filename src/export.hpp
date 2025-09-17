@@ -472,7 +472,8 @@ public:
      */
     void initialize(BatsimContext * context,
                     const std::string & jobs_filename,
-                    const std::string & schedule_filename);
+                    const std::string & schedule_filename,
+                    const std::string & machines_energy_filename);
 
     /**
      * @brief Finalizes the tracer. Writes schedule output file
@@ -500,6 +501,7 @@ private:
     BatsimContext * _context = nullptr; //!< The Batsim context
     WriteBuffer * _wbuf = nullptr; //!< The buffer used to handle the jobs output file
     std::string _schedule_filename; //!< The filename of the schedule output file
+    std::string _machines_energy_filename; //!< The filename of the schedule output file
 
     // Jobs-related
     std::vector<std::string> _job_keys; //!< The list of keys in the map

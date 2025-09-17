@@ -12,13 +12,19 @@
 
 #include <boost/algorithm/string/join.hpp>
 
+#include <intervalset.hpp>
 #include <stdlib.h>
 #include <xbt.h>
 #include <math.h>
 #include <float.h>
 
+#include <simgrid/s4u.hpp>
+#include <simgrid/host.h>
+#include <simgrid/plugins/energy.h>
+
 #include "context.hpp"
 #include "jobs.hpp"
+#include "machines.hpp"
 
 using namespace std;
 
@@ -77,7 +83,8 @@ void prepare_batsim_outputs(BatsimContext * context)
 
     context->jobs_tracer.initialize(context,
                                     context->export_prefix + "_jobs.csv",
-                                    context->export_prefix + "_schedule.csv");
+                                    context->export_prefix + "_schedule.csv",
+                                    context->export_prefix + "_machines_energy.csv");
 }
 
 void finalize_batsim_outputs(BatsimContext * context)
@@ -964,12 +971,14 @@ JobsTracer::~JobsTracer()
 
 void JobsTracer::initialize(BatsimContext *context,
                        const string & jobs_filename,
-                       const string & schedule_filename)
+                       const string & schedule_filename,
+                       const string & machines_energy_filename)
 {
     xbt_assert(_wbuf == nullptr, "Double call of JobsTracer::initialize");
     _wbuf = new WriteBuffer(jobs_filename);
     _context = context;
     _schedule_filename = schedule_filename;
+    _machines_energy_filename = machines_energy_filename;
 
     // Prepare for jobs output file
     _job_keys = {
@@ -1008,6 +1017,18 @@ void JobsTracer::finalize()
     // Finalize jobs output file
     flush();
     close_buffer();
+
+    // Write the machines_energy output file
+    ofstream fme(_machines_energy_filename, ios_base::trunc);
+    xbt_assert(fme.is_open(), "Cannot write file '%s'", _machines_energy_filename.c_str());
+    fme << "host_id,host_name,consumed_energy\n";
+    for (const Machine * machine : _context->machines.machines())
+    {
+        auto host = machine->host;
+        fme << machine->id << "," << host->get_cname() << "," << static_cast<long double>(sg_host_get_consumed_energy(machine->host)) << "\n";
+    }
+    fme.close();
+    XBT_INFO("Machines energy consumption written to '%s'", _machines_energy_filename.c_str());
 
     // Write the schedule output file
     ofstream f(_schedule_filename, ios_base::trunc);
